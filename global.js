@@ -1,5 +1,6 @@
 ﻿var day = 0; //дней прошло 0-6, 7,8,9
 var that; //ссылка на внутренний this
+var repeat = false; // повторная игра
 
 //строки турнирных таблиц - this.grA1 ...
 var tA = [];
@@ -9,13 +10,17 @@ var tB = [];
 var tA1 = [];
 var tB1 = [];
 
-//запоминаем объекты teams в конце 7 дня (первые четыре из каждой группы)
+//запоминаем объекты teams в конце 7 дня (первые четыре объекта из каждой группы)
 var tA7 = [];
 var tB7 = [];
+
+//массив команд в плейофф по порядку сверху вниз teamsPO = [tA7[0], tB7[3], tA7[1],...
+var teamsPO = [];
 
 //строки в играх по дням - this.gnA1...
 var gameDayA = [];
 var gameDayB = [];
+
 
 //отсортированные команды по grpos;
 var arr_grpos_A = [];
@@ -61,11 +66,21 @@ function gameDay() {
 			gameDayB[i].def1 = tB1[r[day][i*2]].def;
 			gameDayB[i].att2 = tB1[r[day][i*2+1]].att; //второй
 			gameDayB[i].def2 = tB1[r[day][i*2+1]].def;
-		}
 
+			//добавим свойства овертайма всем. Обнуляем показатели
+			gameDayA[i].obj1.ot = false;
+			gameDayA[i].obj2.ot = false;
+			gameDayB[i].obj1.ot = false;
+			gameDayB[i].obj2.ot = false;
+			
+			gameDayA[i].obj1.ot = false;
+			gameDayA[i].obj2.ot = false;
+			gameDayB[i].obj1.ot = false;
+			gameDayB[i].obj2.ot = false;			
+		}
+		
 	day++;
 }
-
 
 //функция мгновенного определения исхода матча (5 кадр) в свойства score и время забития голов заносим в массив
 //подсчет всех параметров кроме grpos
@@ -79,7 +94,7 @@ function saveAllGoalsDay() {
 		
 		//увеличиваем на гол при ничье
 		if (gameDayA[i].score1 == gameDayA[i].score2) {
-			if(gameDayA[i].att1 > gameDayA[i].att2){
+			if(getScore(gameDayA[i].att1, gameDayA[i].def2) > getScore(gameDayA[i].att2, gameDayA[i].def1)){
 				gameDayA[i].score1++;
 				gameDayA[i].obj1.ot = true; //ОТ или буллиты
 			} else {
@@ -88,7 +103,7 @@ function saveAllGoalsDay() {
 			}
 		}
 		if (gameDayB[i].score1 == gameDayB[i].score2) {
-			if(gameDayB[i].att1 > gameDayB[i].att2){
+			if(getScore(gameDayB[i].att1, gameDayB[i].def2) > getScore(gameDayB[i].att2, gameDayB[i].def1)){
 				gameDayB[i].score1++;
 				gameDayB[i].obj1.ot = true;
 			} else {
@@ -160,7 +175,197 @@ function saveAllGoalsDay() {
 	}
 }
 
-//РАССТАНОВКА КОМАНД ПО ПОЗИЦИЯ В ГРУППЕ СОГЛАСНО POINTS И ЛИЧНЫМ ВСТРЕЧАМ
+function saveAllGoalsDay2(that) {
+	//вычисляем количество голов
+	that.block_1.score1 = getScore(teamsPO[0].att, teamsPO[1].def);
+	that.block_1.score2 = getScore(teamsPO[1].att, teamsPO[0].def);
+	that.block_2.score1 = getScore(teamsPO[2].att, teamsPO[3].def);
+	that.block_2.score2 = getScore(teamsPO[3].att, teamsPO[2].def);
+	that.block_3.score1 = getScore(teamsPO[4].att, teamsPO[5].def);
+	that.block_3.score2 = getScore(teamsPO[5].att, teamsPO[4].def);
+	that.block_4.score1 = getScore(teamsPO[6].att, teamsPO[7].def);
+	that.block_4.score2 = getScore(teamsPO[7].att, teamsPO[6].def);
+
+	
+	//увеличиваем на гол при ничье
+	if (that.block_1.score1 == that.block_1.score2) {
+		if(getScore(teamsPO[0].att, teamsPO[1].def) > getScore(teamsPO[1].att, teamsPO[0].def)){
+			that.block_1.score1++;
+			teamsPO[0].ot = true; //ОТ или буллиты
+		} else {
+			that.block_1.score2++;
+			teamsPO[1].ot = true; //ОТ или буллиты
+		}
+	}
+	if (that.block_2.score1 == that.block_2.score2) {
+		if(getScore(teamsPO[2].att, teamsPO[3].def) > getScore(teamsPO[3].att, teamsPO[2].def)){
+			that.block_2.score1++;
+			teamsPO[2].ot = true;
+		} else {
+			that.block_2.score2++;
+			teamsPO[3].ot = true;
+		}
+	}
+	if (that.block_3.score1 == that.block_3.score2) {
+		if(getScore(teamsPO[4].att, teamsPO[5].def) > getScore(teamsPO[5].att, teamsPO[4].def)){
+			that.block_3.score1++;
+			teamsPO[4].ot = true;
+		} else {
+			that.block_3.score2++;
+			teamsPO[5].ot = true;
+		}
+	}
+	if (that.block_4.score1 == that.block_4.score2) {
+		if(getScore(teamsPO[6].att, teamsPO[7].def) > getScore(teamsPO[7].att, teamsPO[6].def)){
+			that.block_4.score1++;
+			teamsPO[6].ot = true;
+		} else {
+			that.block_4.score2++;
+			teamsPO[7].ot = true;	
+		}
+	}
+	
+	//получаем массив минут голов
+	that.block_1.score1Time = addRandomTime(that.block_1.score1);
+	that.block_1.score2Time = addRandomTime(that.block_1.score2);
+	that.block_2.score1Time = addRandomTime(that.block_2.score1);
+	that.block_2.score2Time = addRandomTime(that.block_2.score2);
+	that.block_3.score1Time = addRandomTime(that.block_3.score1);
+	that.block_3.score2Time = addRandomTime(that.block_3.score2);
+	that.block_4.score1Time = addRandomTime(that.block_4.score1);
+	that.block_4.score2Time = addRandomTime(that.block_4.score2);
+	
+	
+	//разница голов команд 1 и 2
+	that.block_1.delta = that.block_1.score1 - that.block_1.score2;
+	that.block_2.delta = that.block_2.score1 - that.block_2.score2;
+	that.block_3.delta = that.block_3.score1 - that.block_3.score2;
+	that.block_4.delta = that.block_4.score1 - that.block_4.score2;
+		
+	// кто проходит включать после???????????
+		if (that.block_1.delta>0){
+			that.block_5.t1 = tA7[0];
+		} else if(that.block_1.delta<0){
+			that.block_5.t1 = tB7[3];
+		}
+		
+		if (that.block_2.delta>0){
+			that.block_5.t2 = tA7[1];
+		} else if(that.block_2.delta<0){
+			that.block_5.t2 = tB7[2];
+		}
+		
+		if (that.block_3.delta>0){
+			that.block_6.t1 = tA7[2];
+		} else if(that.block_3.delta<0){
+			that.block_6.t1 = tB7[1];
+		}
+		
+		if (that.block_4.delta>0){
+			that.block_6.t2 = tA7[3];
+		} else if(that.block_4.delta<0){
+			that.block_6.t2 = tB7[0];
+		}		
+//teamsPO = [tA7[0], tB7[3], tA7[1], tB7[2], tA7[2], tB7[1], tA7[3], tB7[0]];
+}
+
+function saveAllGoalsDay3(that) {
+	
+	//вычисляем количество голов
+	that.block_5.score1 = getScore(that.block_5.t1.att, that.block_5.t2.def);
+	that.block_5.score2 = getScore(that.block_5.t2.att, that.block_5.t1.def);
+	that.block_6.score1 = getScore(that.block_6.t1.att, that.block_6.t2.def);
+	that.block_6.score2 = getScore(that.block_6.t2.att, that.block_6.t1.def);
+
+	//увеличиваем на гол при ничье
+	if (that.block_5.score1 == that.block_5.score2) {
+		if(getScore(that.block_5.t1.att, that.block_5.t2.def) > getScore(that.block_5.t2.att, that.block_5.t1.def)){
+			that.block_5.score1++;
+			that.block_5.t1.ot = true; //ОТ или буллиты
+		} else {
+			that.block_5.score2++;
+			that.block_5.t2.ot = true; //ОТ или буллиты
+		}
+	}
+
+	if (that.block_6.score1 == that.block_6.score2) {
+		if(getScore(that.block_6.t1.att, that.block_6.t2.def) > getScore(that.block_6.t2.att, that.block_6.t1.def)){
+			that.block_6.score1++;
+			that.block_6.t1.ot = true; //ОТ или буллиты
+		} else {
+			that.block_6.score2++;
+			that.block_6.t2.ot = true; //ОТ или буллиты
+		}
+	}
+	
+	//получаем массив минут голов
+	that.block_5.score1Time = addRandomTime(that.block_5.score1);
+	that.block_5.score2Time = addRandomTime(that.block_5.score2);
+	that.block_6.score1Time = addRandomTime(that.block_6.score1);
+	that.block_6.score2Time = addRandomTime(that.block_6.score2);
+
+	//разница голов команд 1 и 2
+	that.block_5.delta = that.block_5.score1 - that.block_5.score2;
+	that.block_6.delta = that.block_6.score1 - that.block_6.score2;
+		
+	// кто проходит включать после???????????
+		if (that.block_5.delta>0){
+			that.block_7.t1 = that.block_5.t1;
+			that.block_8.t1 = that.block_5.t2;
+		} else if(that.block_5.delta<0){
+			that.block_7.t1 = that.block_5.t2;
+			that.block_8.t1 = that.block_5.t1;
+		}
+		
+		if (that.block_6.delta>0){
+			that.block_7.t2 = that.block_6.t1;
+			that.block_8.t2 = that.block_6.t2;
+		} else if(that.block_6.delta<0){
+			that.block_7.t2 = that.block_6.t2;
+			that.block_8.t2 = that.block_6.t1;
+		}	
+}
+
+function saveAllGoalsDay4(that) {
+	//вычисляем количество голов
+	that.block_7.score1 = getScore(that.block_7.t1.att, that.block_7.t2.def);
+	that.block_7.score2 = getScore(that.block_7.t2.att, that.block_7.t1.def);
+	that.block_8.score1 = getScore(that.block_8.t1.att, that.block_8.t2.def);
+	that.block_8.score2 = getScore(that.block_8.t2.att, that.block_8.t1.def);
+
+	//увеличиваем на гол при ничье
+	if (that.block_7.score1 == that.block_7.score2) {
+		if(getScore(that.block_7.t1.att, that.block_7.t2.def) > getScore(that.block_7.t2.att, that.block_7.t1.def)){
+			that.block_7.score1++;
+			that.block_7.t1.ot = true; //ОТ или буллиты
+		} else {
+			that.block_7.score2++;
+			that.block_7.t2.ot = true; //ОТ или буллиты
+		}
+	}
+
+	if (that.block_8.score1 == that.block_8.score2) {
+		if(getScore(that.block_8.t1.att, that.block_8.t2.def) > getScore(that.block_8.t2.att, that.block_8.t1.def)){
+			that.block_8.score1++;
+			that.block_8.t1.ot = true; //ОТ или буллиты
+		} else {
+			that.block_8.score2++;
+			that.block_8.t2.ot = true; //ОТ или буллиты
+		}
+	}
+	
+	//получаем массив минут голов
+	that.block_7.score1Time = addRandomTime(that.block_7.score1);
+	that.block_7.score2Time = addRandomTime(that.block_7.score2);
+	that.block_8.score1Time = addRandomTime(that.block_8.score1);
+	that.block_8.score2Time = addRandomTime(that.block_8.score2);
+
+	//разница голов команд 1 и 2
+	that.block_7.delta = that.block_7.score1 - that.block_7.score2;
+	that.block_8.delta = that.block_8.score1 - that.block_8.score2;
+}
+
+//РАССТАНОВКА КОМАНД ПО ПОЗИЦИЯ В ГРУППЕ СОГЛАСНО POINTS И ЛИЧНЫМ ВСТРЕЧАМ 
 function getGrpos() {
 	arr_grpos_A = tA1.slice();  //копируем массив объектов, сортируем объекты по поинт
 	arr_grpos_B = tB1.slice();
@@ -172,10 +377,7 @@ function getGrpos() {
 	for (var i = 0; i < 8; i++) {
 		arr_grpos_A[i].grpos = (i+1);
 		arr_grpos_B[i].grpos = (i+1);
-	}
-	//testArray(arr_grpos_A); //ТЕСТИРУЕМ МАССИВ
-	//testArray(arr_grpos_B);
-	
+	}	
 	
 	//grpos как место в массиве в зависимости от личной встречи(?) разницы голов и очков
 	for (team in teams){
@@ -200,7 +402,10 @@ function getGrpos() {
 	
 }
 
-function gameBlock(that) {
+function gameBlock1(that) {
+	//&&&&delete
+	teamsPO = [tA7[0], tB7[3], tA7[1], tB7[2], tA7[2], tB7[1], tA7[3], tB7[0]];
+	
 	that.block_1.team1.text = tA7[0].name;
 	that.block_1.team2.text = tB7[3].name;
 	
@@ -213,7 +418,7 @@ function gameBlock(that) {
 	that.block_4.team1.text = tA7[3].name;
 	that.block_4.team2.text = tB7[0].name;
 	
-	//проставляем нолики
+	//проставляем нулевой счет
 	that.block_1.goals1.text = 0;
 	that.block_1.goals2.text = 0;
 	
@@ -225,16 +430,11 @@ function gameBlock(that) {
 	
 	that.block_4.goals1.text = 0;
 	that.block_4.goals2.text = 0;
-
 }
-
-
 
 function set_grpos(obj_a,obj_b){
 	if (obj_a.points == obj_b.points) {
-	
-	//console.log("показатели равны");
-	//УЧЕТ ЛИЧНЫХ ВСТРЕЧ - ПРОВЕРИТЬ ПОЗДНЕЕ ПРИ ПЕРЕХОДЕ К НЕСКОЛЬКИМ ДНЯМ//проверил плохо работает
+
 	//если личных встреч не было, то сортирвка по разнице шайб	
 		for (var i = 0; i < obj_a.pk.length; i++) {
 			if(obj_a.pk[i] == obj_b.pos) return -1; 
@@ -254,7 +454,7 @@ function set_grpos(obj_a,obj_b){
 
 //подставляем показатель атаки первой команды (88) и показатель обороны второй (74) - получаем сколько голов забьет 1 команда
 function getScore (v1, v2) {
-	return Math.round(0.3 + 7.4*((Math.random()+0.15)*v1*(100-Math.random()*v2)/10000));
+	return Math.round(0.3 + 7.2*((Math.random()+0.25)*v1*(100-Math.random()*v2)/10000));
 }
 
 //функция тест массива объектов -  имена объектов
@@ -283,29 +483,50 @@ function addRandomTime (num) {
 	return arr;
 }
 
-
 var teams = {
-Canada: 		{pos: 1,att: 95,def: 89,form: 86,mor: 92,name:'Канада',grpos: 1, pob: 0, por: 0, goals1: 0, goals2: 0, points:0, group: '', pk:[]},
-Russia: 		{pos: 2,att: 94,def: 88,form: 84,mor: 92,name:'Россия',grpos: 1, pob: 0, por: 0, goals1: 0, goals2: 0, points:0, group: '', pk:[]},
-Sweden: 		{pos: 3,att: 85,def: 83,form: 82,mor: 86,name:'Швеция',grpos: 2, pob: 0, por: 0, goals1: 0, goals2: 0, points:0, group: '', pk:[]},
-Finland: 		{pos: 4,att: 84,def: 84,form: 84,mor: 86,name:'Финляндия',grpos: 2, pob: 0, por: 0, goals1: 0, goals2: 0, points:0, group: '', pk:[]},
-Czech: 			{pos: 5,att: 79,def: 77,form: 76,mor: 80,name:'Чехия',grpos: 3, pob: 0, por: 0, goals1: 0, goals2: 0, points:0, group: '', pk:[]},
-Usa: 			{pos: 6,att: 80,def: 78,form: 84,mor: 84,name:'США',grpos: 3, pob: 0, por: 0, goals1: 0, goals2: 0, points:0, group: '', pk:[]},
-Germany: 		{pos: 7,att: 74,def: 73,form: 72,mor: 70,name:'Германия',grpos: 4, pob: 0, por: 0, goals1: 0, goals2: 0, points:0, group: '', pk:[]},
-Switzerland: 	{pos: 8,att: 70,def: 71,form: 74,mor: 76,name:'Швейцария',grpos: 4, pob: 0, por: 0, goals1: 0, goals2: 0, points:0, group: '', pk:[]},
-Norway: 		{pos: 9,att: 65,def: 62,form: 68,mor: 70,name:'Норвегия',grpos: 5, pob: 0, por: 0, goals1: 0, goals2: 0, points:0, group: '', pk:[]},
-Slovakia: 		{pos:10,att: 64,def: 58,form: 66,mor: 68,name:'Словакия',grpos: 5, pob: 0, por: 0, goals1: 0, goals2: 0, points:0, group: '', pk:[]},
-Belarus: 		{pos:11,att: 63,def: 60,form: 70,mor: 68,name:'Беларусь',grpos: 6, pob: 0, por: 0, goals1: 0, goals2: 0, points:0, group: '', pk:[]},
-France: 		{pos:12,att: 59,def: 57,form: 66,mor: 64,name:'Франция',grpos: 6, pob: 0, por: 0, goals1: 0, goals2: 0, points:0, group: '', pk:[]},
-Latvia: 		{pos:13,att: 57,def: 53,form: 64,mor: 66,name:'Латвия',grpos: 7, pob: 0, por: 0, goals1: 0, goals2: 0, points:0, group: '', pk:[]},
-Denmark: 		{pos:14,att: 52,def: 52,form: 62,mor: 62,name:'Дания',grpos: 7, pob: 0, por: 0, goals1: 0, goals2: 0, points:0, group: '', pk:[]},
-Slovenia: 		{pos:15,att: 54,def: 55,form: 66,mor: 60,name:'Словения',grpos: 8, pob: 0, por: 0, goals1: 0, goals2: 0, points:0, group: '', pk:[]},
-Kazakhstan: 	{pos:16,att: 48,def: 49,form: 62,mor: 56,name:'Казахстан',grpos: 8, pob: 0, por: 0, goals1: 0, goals2: 0, points:0, group: '', pk:[]}
+Canada: 		{pos: 1,att: 95,def: 89,name:'Канада',grpos: 1, pob: 0, por: 0, goals1: 0, goals2: 0, points:0, group: '', pk:[]},
+Russia: 		{pos: 2,att: 94,def: 88,name:'Россия',grpos: 1, pob: 0, por: 0, goals1: 0, goals2: 0, points:0, group: '', pk:[]},
+Sweden: 		{pos: 3,att: 83,def: 82,name:'Швеция',grpos: 2, pob: 0, por: 0, goals1: 0, goals2: 0, points:0, group: '', pk:[]},
+Finland: 		{pos: 4,att: 82,def: 82,name:'Финляндия',grpos: 2, pob: 0, por: 0, goals1: 0, goals2: 0, points:0, group: '', pk:[]},
+Czech: 			{pos: 5,att: 75,def: 75,name:'Чехия',grpos: 3, pob: 0, por: 0, goals1: 0, goals2: 0, points:0, group: '', pk:[]},
+Usa: 			{pos: 6,att: 74,def: 75,name:'США',grpos: 3, pob: 0, por: 0, goals1: 0, goals2: 0, points:0, group: '', pk:[]},
+Germany: 		{pos: 7,att: 68,def: 66,name:'Германия',grpos: 4, pob: 0, por: 0, goals1: 0, goals2: 0, points:0, group: '', pk:[]},
+Switzerland: 	{pos: 8,att: 64,def: 62,name:'Швейцария',grpos: 4, pob: 0, por: 0, goals1: 0, goals2: 0, points:0, group: '', pk:[]},
+Norway: 		{pos: 9,att: 58,def: 56,name:'Норвегия',grpos: 5, pob: 0, por: 0, goals1: 0, goals2: 0, points:0, group: '', pk:[]},
+Slovakia: 		{pos:10,att: 57,def: 52,name:'Словакия',grpos: 5, pob: 0, por: 0, goals1: 0, goals2: 0, points:0, group: '', pk:[]},
+Belarus: 		{pos:11,att: 55,def: 52,name:'Беларусь',grpos: 6, pob: 0, por: 0, goals1: 0, goals2: 0, points:0, group: '', pk:[]},
+France: 		{pos:12,att: 46,def: 50,name:'Франция',grpos: 6, pob: 0, por: 0, goals1: 0, goals2: 0, points:0, group: '', pk:[]},
+Latvia: 		{pos:13,att: 42,def: 43,name:'Латвия',grpos: 7, pob: 0, por: 0, goals1: 0, goals2: 0, points:0, group: '', pk:[]},
+Denmark: 		{pos:14,att: 38,def: 42,name:'Дания',grpos: 7, pob: 0, por: 0, goals1: 0, goals2: 0, points:0, group: '', pk:[]},
+Slovenia: 		{pos:15,att: 38,def: 40,name:'Словения',grpos: 8, pob: 0, por: 0, goals1: 0, goals2: 0, points:0, group: '', pk:[]},
+Korea: 			{pos:16,att: 35,def: 36,name:'Ю.Корея',grpos: 8, pob: 0, por: 0, goals1: 0, goals2: 0, points:0, group: '', pk:[]}
 }
 //pk - массив побежденных команд записываем pos
 
-
-
 /*
-1.
+1. плохая обработка голов 
+2. убрать отсебятину с показателями аттаки 
+3. ввести значки сборных
+4. добавить элементарный звук
+5. корректировка скорости
+6. добавление * происходит позже
+7. баг в группе б проигравшая по булитам команда ставится *
+*/
+
+/* тестируем по голам
+function getScore (v1, v2) {
+	return Math.round(0.3 + 7.4*((Math.random()+0.15)*v1*(100-Math.random()*v2)/10000));
+}
+
+var i;
+var sum1 = 0;
+var sum2 = 0;
+
+for (i=0; i<100; i++){
+sum1 += getScore (95, 60);
+sum2 += getScore (63, 89);
+}
+
+alert("Канада забьет - " + sum1/100);
+alert("Беларусь забьет - " + sum2/100);
 */
